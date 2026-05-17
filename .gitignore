@@ -1,0 +1,36 @@
+# =============================================
+# .gitignore - Sistem Perpustakaan
+# Java Maven + Apache NetBeans
+# =============================================
+
+# Maven build output
+/target/
+
+# NetBeans - file private per komputer
+/nbproject/private/
+/nbbuild/
+/nbdist/
+nbactions.xml
+nb-configuration.xml
+
+# Compiled Java
+*.class
+*.jar
+*.war
+
+# Database & konfigurasi sensitif
+db.properties
+database.properties
+config.properties
+*.sql.bak
+
+# Log
+*.log
+logs/
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Mac
+.DS_Store
