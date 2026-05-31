@@ -10,29 +10,31 @@ import java.sql.SQLException;
 
 /**
  *
- * @author Irfan Oesman Asa
+
+
+ * @author sajin
  */
-public class Koneksi {
-     private Connection koneksi;
+class Koneksi {
     
-    public Connection connect() {
-        // 1. Load Driver MySQL
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver"); // Menyesuaikan ke driver mysql-connector-j terbaru
-            System.out.println("Berhasil Load Driver");
-        } catch (ClassNotFoundException ex) {
-            System.out.println("Gagal Load Driver: " + ex);
-        }
-        
-        // 2. Koneksi ke Database 'mahasiswa'
-        String url = "jdbc:mysql://localhost:3306/mahasiswa";
-        try {
-            koneksi = DriverManager.getConnection(url, "root", "");
-            System.out.println("Berhasil Koneksi Database");
-        } catch (SQLException ex) {
-            System.out.println("Gagal Koneksi Database: " + ex);
-        }
-        
-        return koneksi;
+    static void close() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
+    private Connection koneksi;
+    public Connection connect(){
+    try{
+        Class.forName("com.mysql.jdbc.Driver");
+        System.out.println("Berhasil Koneksi");
+    } catch (ClassNotFoundException ex){
+        System.out.println("Gagal Koneksi"+ex);
+    }
+    String url = "jdbc:mysql://localhost:3306/perpustakaan";
+    try{
+        koneksi = DriverManager.getConnection(url, "root", "");
+        System.out.println("Berhasil Koneksi Database");
+    } catch (SQLException ex){
+        System.out.println("Berhasil Koneksi Database"+ex);
+    }
+    return koneksi;
+    }   
 }
+
