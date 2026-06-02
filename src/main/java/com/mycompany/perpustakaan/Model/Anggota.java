@@ -15,7 +15,7 @@ public class Anggota {
     private String email;
     private String noTelpon;
     private String alamat;
-    private String status; // "aktif" / "nonaktif"
+    private String status; 
 
     // Constructor kosong
     public Anggota() {}

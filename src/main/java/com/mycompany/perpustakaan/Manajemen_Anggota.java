@@ -23,7 +23,6 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
      */
     public Manajemen_Anggota() {
         initComponents();
-        getContentPane().setBackground(new java.awt.Color(0,0,200));
     }
 
     private Anggota cariAnggota(String noAnggotaCari) {
@@ -37,15 +36,16 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
     
     private void refreshTable() {
         DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
-        model.setRowCount(0); // Bersihkan isi tabel sebelum diisi ulang
+        model.setRowCount(0); 
         
         for (Anggota a : daftarAnggota) {
-            // Masukkan data sesuai urutan kolom tabel
             model.addRow(new Object[]{
-                a.getNoAnggota(), 
-                a.getNama(), 
-                a.getNoTelpon(), 
-                a.getStatus()
+                a.getNama(),     
+                a.getNoAnggota(),
+                a.getNoTelpon(),
+                a.getStatus(),
+                a.getAlamat(),   
+                a.getEmail()      
             });
         }
     }
@@ -54,7 +54,7 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         jTextField1.setText("");
         jTextField2.setText("");
         jTextField3.setText("");
-        jTextField2.requestFocus(); // Kembalikan kursor ke kolom ID
+        jTextField2.requestFocus();
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -94,9 +94,9 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         jLabel11 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
-        jLabel15 = new javax.swing.JLabel();
         jLabel16 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
+        jLabel17 = new javax.swing.JLabel();
 
         jLabel1.setText("jLabel1");
 
@@ -138,25 +138,23 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
         jLabel4.setText("No Hp");
-        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 150, 60, 20));
-
-        jTextField3.addActionListener(this::jTextField3ActionPerformed);
+        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 120, 60, 20));
         getContentPane().add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 120, 184, -1));
 
         jTable2.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Nama", "ID", "No Hp", "Status", "Alamat", "Email"
             }
         ));
         jScrollPane2.setViewportView(jTable2);
 
-        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 240, 380, 140));
+        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 250, 450, 140));
 
         jButton6.setText("Clear");
         jButton6.addActionListener(this::jButton6ActionPerformed);
@@ -170,12 +168,12 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         jLabel6.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
         jLabel6.setText("Alamat");
-        getContentPane().add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 120, 60, -1));
+        getContentPane().add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 180, 60, -1));
 
         jLabel7.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText("Status");
-        getContentPane().add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 180, 60, 20));
+        getContentPane().add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 150, 60, 20));
 
         jLabel8.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel8.setForeground(new java.awt.Color(255, 255, 255));
@@ -212,14 +210,14 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         jLabel13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/clear.png"))); // NOI18N
         getContentPane().add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 180, -1, -1));
 
-        jLabel15.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/mycompany/perpustakaan/biru.jpeg"))); // NOI18N
-        getContentPane().add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, 120, 420));
-
         jLabel16.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/biru.jpeg"))); // NOI18N
-        getContentPane().add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, 520, 50));
+        getContentPane().add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 610, 50));
 
         jLabel14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/cukulat.jpeg"))); // NOI18N
-        getContentPane().add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 50, 400, 370));
+        getContentPane().add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 50, -1, 370));
+
+        jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/biru.jpeg"))); // NOI18N
+        getContentPane().add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 130, 420));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -236,7 +234,7 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         Anggota anggota = cariAnggota(id);
         if (anggota != null) {
             daftarAnggota.remove(anggota);
-            refreshTable(); // Update tabel setelah dihapus
+            refreshTable();
             bersihkanForm();
             JOptionPane.showMessageDialog(this, "Berhasil dihapus!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -255,7 +253,6 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
 
         Anggota anggota = cariAnggota(id);
         if (anggota != null) {
-            // Jika ketemu, tampilkan datanya di kotak teks agar mudah diedit
             jTextField1.setText(anggota.getNama());
             jTextField3.setText(anggota.getNoTelpon());
             JOptionPane.showMessageDialog(this, "Data ditemukan! Silakan edit lalu klik 'Edit' jika ingin mengubah.", "Info", JOptionPane.INFORMATION_MESSAGE);
@@ -270,10 +267,11 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // Ambil data langsung dari text field
         String nama = jTextField1.getText();
         String id = jTextField2.getText();
         String kontak = jTextField3.getText();
+        String alamat = jTextField6.getText();
+        String email = jTextField7.getText();  
 
         if (id.isEmpty() || nama.isEmpty() || kontak.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Semua kolom (Nama, ID, Kontak) harus diisi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
@@ -285,11 +283,11 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
             return;
         }
 
-        Anggota anggotaBaru = new Anggota(nama, id, "-", kontak, "-");
+        Anggota anggotaBaru = new Anggota(nama, id, email, kontak, alamat);
         daftarAnggota.add(anggotaBaru);
 
-        refreshTable(); // Update tabel setelah nambah data
-        bersihkanForm(); // Kosongin form
+        refreshTable();
+        bersihkanForm();
         JOptionPane.showMessageDialog(this, "Mantap, anggota berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton1ActionPerformed
@@ -311,7 +309,7 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
             if (!namaBaru.isEmpty()) anggota.setNama(namaBaru);
             if (!kontakBaru.isEmpty()) anggota.setNoTelpon(kontakBaru);
 
-            refreshTable(); // Update tabel setelah diedit
+            refreshTable(); 
             bersihkanForm();
             JOptionPane.showMessageDialog(this, "Sip, data anggota berhasil di-update!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -319,10 +317,6 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         }
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton2ActionPerformed
-
-    private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -361,8 +355,8 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
