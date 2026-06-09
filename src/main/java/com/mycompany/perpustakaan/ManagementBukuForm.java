@@ -1,5 +1,5 @@
 
-package com.mycompany.perpustakaan.ui;
+package com.mycompany.perpustakaan;
 
 
 public class ManagementBukuForm extends javax.swing.JFrame {
