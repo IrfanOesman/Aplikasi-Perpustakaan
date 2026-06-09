@@ -8,6 +8,6 @@ package com.mycompany.perpustakaan.ui;
  *
  * @author TUF
  */
-public class ManajemenBukuForm {
+public class ManagementBukuForm1 {
     
 }

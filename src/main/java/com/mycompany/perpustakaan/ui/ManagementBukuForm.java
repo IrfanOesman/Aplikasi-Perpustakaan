@@ -1,17 +1,20 @@
-
 package com.mycompany.perpustakaan.ui;
 
+import com.mycompany.perpustakaan.dao.BukuDAO;
+import com.mycompany.perpustakaan.model.Buku;
+import java.util.List;
 
 public class ManagementBukuForm extends javax.swing.JFrame {
 private javax.swing.JTable jTable1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.table.DefaultTableModel modelTabel;
     private int idDipilih = -1;
+   private final BukuDAO dao = new BukuDAO();
     private static final String[] KOLOM = {"ID","Judul","Pengarang","ISBN","Kategori","Status"};
     public ManagementBukuForm() {
         initComponents();
         setupTabel();
-        isiDummyData();
+        muatDataDariDB();
         jButton4.setEnabled(false);
         jButton5.setEnabled(false);
     }
@@ -29,17 +32,10 @@ private javax.swing.JTable jTable1;
         if (!e.getValueIsAdjusting()) isiFormDariTabel();
     });
     jScrollPane1 = new javax.swing.JScrollPane(jTable1);
-    jScrollPane1.setBounds(10, 310, 460, 180);
-    getContentPane().add(jScrollPane1);
-    setSize(500, 540);
+getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 310, 460, 180));
+setSize(500, 540);
 }
 
-private void isiDummyData() {
-    modelTabel.setRowCount(0);
-    modelTabel.addRow(new Object[]{1, "Laskar Pelangi",  "Andrea Hirata",    "978-001", "Fiksi",     "Tersedia"});
-    modelTabel.addRow(new Object[]{2, "Bumi Manusia",    "Pramoedya Ananta", "978-002", "Sejarah",   "Dipinjam"});
-    modelTabel.addRow(new Object[]{3, "Clean Code",      "Robert Martin",    "978-003", "Teknologi", "Tersedia"});
-}
 
 private void isiFormDariTabel() {
     int baris = jTable1.getSelectedRow();
@@ -110,6 +106,11 @@ private boolean validasiForm() {
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jTabbedPane2 = new javax.swing.JTabbedPane();
+        jTabbedPane3 = new javax.swing.JTabbedPane();
+        jPanel1 = new javax.swing.JPanel();
+        jPanel2 = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -229,6 +230,13 @@ private boolean validasiForm() {
         jLabel11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/mycompany/perpustakaan/ui/download.jpeg"))); // NOI18N
         jLabel11.setText("jLabel9");
         getContentPane().add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 60, 400, 190));
+        getContentPane().add(jTabbedPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
+        getContentPane().add(jTabbedPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 90, 100, 110));
+        getContentPane().add(jTabbedPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 321, 60, 30));
+
+        jPanel1.add(jPanel2);
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 340, 280, 220));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -238,24 +246,73 @@ private boolean validasiForm() {
     }//GEN-LAST:event_jTextField1ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-    javax.swing.JOptionPane.showMessageDialog(this, "Fitur cari aktif setelah koneksi DB!");
-    }//GEN-LAST:event_jButton1ActionPerformed
+String keyword = jTextField1.getText().trim();
+if (keyword.isEmpty() || keyword.equalsIgnoreCase("Cari Buku")) {
+    muatDataDariDB(); return;
+}
+modelTabel.setRowCount(0);
+List<Buku> list = dao.cariBuku(keyword);
+for (Buku b : list) {
+    modelTabel.addRow(new Object[]{
+        b.getId(), b.getJudul(), b.getPengarang(),
+        b.getIsbn(), b.getKategori(), b.getStatus()
+    });
+}
+if (list.isEmpty())
+    javax.swing.JOptionPane.showMessageDialog(this, "Buku tidak ditemukan!");    }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField2ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField2ActionPerformed
+bersihkanForm();
+muatDataDariDB();    }//GEN-LAST:event_jTextField2ActionPerformed
 
     private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField3ActionPerformed
+if (!validasiForm()) return;
+Buku buku = new Buku(
+    jTextField2.getText().trim(), jTextField3.getText().trim(),
+    jTextField4.getText().trim(), jTextField5.getText().trim(),
+    (String) jComboBox1.getSelectedItem()
+);
+if (dao.tambahBuku(buku)) {
+    muatDataDariDB(); bersihkanForm();
+    javax.swing.JOptionPane.showMessageDialog(this, "Buku berhasil ditambahkan!");
+} else {
+    javax.swing.JOptionPane.showMessageDialog(this,
+        "Gagal! Cek koneksi MySQL.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+}    }//GEN-LAST:event_jTextField3ActionPerformed
 
     private void jTextField4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField4ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField4ActionPerformed
+if (idDipilih == -1 || !validasiForm()) return;
+Buku buku = new Buku(idDipilih,
+    jTextField2.getText().trim(), jTextField3.getText().trim(),
+    jTextField4.getText().trim(), jTextField5.getText().trim(),
+    (String) jComboBox1.getSelectedItem()
+);
+if (dao.updateBuku(buku)) {
+    muatDataDariDB(); bersihkanForm();
+    javax.swing.JOptionPane.showMessageDialog(this, "Buku berhasil diperbarui!");
+} else {
+    javax.swing.JOptionPane.showMessageDialog(this,
+        "Gagal! Cek koneksi MySQL.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+}    }//GEN-LAST:event_jTextField4ActionPerformed
 
     private void jTextField5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField5ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField5ActionPerformed
+if (idDipilih == -1) return;
+if (dao.isBukuDipinjam(idDipilih)) {
+    javax.swing.JOptionPane.showMessageDialog(this,
+        "Buku sedang dipinjam, tidak bisa dihapus!", "Peringatan",
+        javax.swing.JOptionPane.WARNING_MESSAGE); return;
+}
+int ok = javax.swing.JOptionPane.showConfirmDialog(this,
+    "Yakin hapus buku ini?", "Konfirmasi", javax.swing.JOptionPane.YES_NO_OPTION);
+if (ok == javax.swing.JOptionPane.YES_OPTION) {
+    if (dao.hapusBuku(idDipilih)) {
+        muatDataDariDB(); bersihkanForm();
+        javax.swing.JOptionPane.showMessageDialog(this, "Buku berhasil dihapus!");
+    } else {
+        javax.swing.JOptionPane.showMessageDialog(this, "Gagal hapus!", "Error",
+            javax.swing.JOptionPane.ERROR_MESSAGE);
+    }
+}    }//GEN-LAST:event_jTextField5ActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
         // TODO add your handling code here:
@@ -350,10 +407,32 @@ private boolean validasiForm() {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTabbedPane jTabbedPane2;
+    private javax.swing.JTabbedPane jTabbedPane3;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField4;
     private javax.swing.JTextField jTextField5;
     // End of variables declaration//GEN-END:variables
+
+   private void muatDataDariDB() {
+    modelTabel.setRowCount(0);
+    List<Buku> list = dao.getAllBuku();
+    for (Buku b : list) {
+        modelTabel.addRow(new Object[]{
+            b.getId(), b.getJudul(), b.getPengarang(),
+            b.getIsbn(), b.getKategori(), b.getStatus()
+        });
+    }
 }
+
+private void isiDummyData() {
+    modelTabel.setRowCount(0);
+    modelTabel.addRow(new Object[]{1, "Laskar Pelangi",  "Andrea Hirata", "978-979-1227-78-2", "Novel",  "Tersedia"});
+    modelTabel.addRow(new Object[]{2, "Bumi Manusia",    "Pramoedya",     "978-979-407-572-1", "Novel",  "Dipinjam"});
+    modelTabel.addRow(new Object[]{3, "Algoritma Dasar", "Rinaldi Munir", "978-602-022-254-5", "Teknik", "Tersedia"});
+}}
