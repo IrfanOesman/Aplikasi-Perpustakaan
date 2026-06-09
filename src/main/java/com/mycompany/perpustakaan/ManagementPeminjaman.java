@@ -56,8 +56,7 @@ public class ManagementPeminjaman extends javax.swing.JFrame {
     } catch (Exception e) {
         System.out.println(e.getMessage());
     }
-}
-    public void buttonSimpan(){
+}public void buttonSimpan(){
     // 1. Validasi seleksi ComboBox Anggota
     if (cmbAnggota.getSelectedIndex() <= 0) {
         JOptionPane.showMessageDialog(this, "Silakan pilih anggota terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
@@ -86,38 +85,69 @@ public class ManagementPeminjaman extends javax.swing.JFrame {
 
     if (jdTanggalPinjam.getDate() != null && jdTanggalJatuhTempo.getDate() != null) {
         tanggalPinjam = sdf.format(jdTanggalPinjam.getDate());
-        jatuhTempo = sdf.format(jdTanggalJatuhTempo.getDate()); // Berhasil diperbaiki dari jdTanggalPinjam
+        jatuhTempo = sdf.format(jdTanggalJatuhTempo.getDate()); 
     } else {
         JOptionPane.showMessageDialog(this, "Tanggal Pinjam dan Jatuh Tempo harus diisi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
         return;
     }
 
-    // 4. Query INSERT ke Database
-    String sql = "INSERT INTO peminjaman (id_buku, id_anggota, tanggal_pinjam, tanggal_jatuh_tempo, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())";
+    // 4. Query SQL
+    String sqlInsert = "INSERT INTO peminjaman (id_buku, id_anggota, tanggal_pinjam, tanggal_jatuh_tempo, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())";
+    // Sesuaikan nama kolom (misal: 'status') dan nama tabel (misal: 'buku') dengan database Anda
+    String sqlUpdateBuku = "UPDATE buku SET status = 'dipinjam' WHERE id_buku = ?"; 
 
     try {
-        // Memastikan Auto-Commit aktif agar data langsung tertulis secara permanen
-        conn.setAutoCommit(true);
+        // MENONAKTIFKAN Auto-Commit untuk memulai transaksi database (lebih aman)
+        conn.setAutoCommit(false);
         
-        PreparedStatement pst = conn.prepareStatement(sql);
-        pst.setString(1, idBuku);
-        pst.setString(2, noAnggota);
-        pst.setString(3, tanggalPinjam);
-        pst.setString(4, jatuhTempo);
-        pst.setString(5, status);
+        // --- PROSES 1: INSERT KE TABEL PEMINJAMAN ---
+        PreparedStatement pstInsert = conn.prepareStatement(sqlInsert);
+        pstInsert.setString(1, idBuku);
+        pstInsert.setString(2, noAnggota);
+        pstInsert.setString(3, tanggalPinjam);
+        pstInsert.setString(4, jatuhTempo);
+        pstInsert.setString(5, status);
+        int rowsInsert = pstInsert.executeUpdate();
 
-        int rows = pst.executeUpdate();
-        if (rows > 0) {
-            JOptionPane.showMessageDialog(this, "Peminjaman Berhasil Disimpan!");
+        // --- PROSES 2: UPDATE STATUS DI TABEL BUKU ---
+        PreparedStatement pstUpdate = conn.prepareStatement(sqlUpdateBuku);
+        pstUpdate.setString(1, idBuku);
+        int rowsUpdate = pstUpdate.executeUpdate();
+
+        // Validasi: Jika kedua proses berhasil, maka komit data ke database
+        if (rowsInsert > 0 && rowsUpdate > 0) {
+            conn.commit(); // Data disimpan permanen secara bersamaan
+            
+            JOptionPane.showMessageDialog(this, "Peminjaman Berhasil Disimpan dan Status Buku Diperbarui!");
             
             // Mengosongkan form input setelah berhasil
             bersih(); 
-  
             
-           
+            // Catatan: Jika Anda punya fungsi untuk refresh tabel atau combonbox buku, panggil di sini
+            // tampilkanDataBuku(); 
+        } else {
+            // Jika salah satu gagal, batalkan semua perubahan
+            conn.rollback();
+            JOptionPane.showMessageDialog(this, "Gagal memproses peminjaman.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+        
     } catch (SQLException e) {
+        try {
+            // Jika terjadi error, batalkan semua transaksi agar tidak ada data yang 'menggantung'
+            if (conn != null) {
+                conn.rollback();
+            }
+        } catch (SQLException ex) {
+            System.out.println("Rollback gagal: " + ex.getMessage());
+        }
         JOptionPane.showMessageDialog(this, "Database Error: " + e.getMessage(), "Error Penyimpanan", JOptionPane.ERROR_MESSAGE);
+    } finally {
+        try {
+            // Kembalikan ke setelan awal auto-commit
+            conn.setAutoCommit(true);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
     private void buttonCari(){
@@ -334,6 +364,8 @@ public class ManagementPeminjaman extends javax.swing.JFrame {
     // 1. Kosongkan JTextField untuk nomor/ID anggota (jika ada)
     fNomor.setText("");
     areaPeminjaman.setText("");
+    jdTanggalJatuhTempo.setDate(null);
+    jdTanggalPinjam.setDate(null);
     
     // 2. Kembalikan JComboBox Anggota dan Buku ke pilihan pertama ("- Pilih -")
     if (cmbAnggota.getItemCount() > 0) {
@@ -343,18 +375,7 @@ public class ManagementPeminjaman extends javax.swing.JFrame {
         cmbPilihBuku.setSelectedIndex(0);
     }
     
-    // 3. Reset JDateChooser Tanggal Pinjam ke hari ini otomatis
-    jdTanggalPinjam.setDate(new java.util.Date());
-    
-    // 4. Atur JDateChooser Jatuh Tempo otomatis ke 7 hari ke depan dari hari ini
-    java.util.Calendar cal = java.util.Calendar.getInstance();
-    cal.setTime(new java.util.Date());
-    cal.add(java.util.Calendar.DAY_OF_YEAR, 7); 
-    jdTanggalJatuhTempo.setDate(cal.getTime());
-    
-    // 5. Kosongkan atau perbarui JTextArea ringkasan durasi peminjaman
-    // Panggil method hitungDurasiPeminjaman() agar JTextArea langsung terisi ringkasan default 7 hari
-    hitungDurasiPeminjaman(); 
+        
 }
     /**
      * Creates new form ManajemenAnggota
@@ -698,6 +719,7 @@ public class ManagementPeminjaman extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
       buttonSimpan();
+      loadBuku();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed

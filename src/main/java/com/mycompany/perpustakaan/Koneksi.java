@@ -14,27 +14,30 @@ import java.sql.SQLException;
 
  * @author sajin
  */
-class Koneksi {
+public class Koneksi {
     
-    static void close() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
     private Connection koneksi;
+    
     public Connection connect(){
-    try{
-        Class.forName("com.mysql.jdbc.Driver");
-        System.out.println("Berhasil Koneksi");
-    } catch (ClassNotFoundException ex){
-        System.out.println("Gagal Koneksi"+ex);
-    }
-    String url = "jdbc:mysql://localhost:3306/perpustakaan";
-    try{
-        koneksi = DriverManager.getConnection(url, "root", "");
-        System.out.println("Berhasil Koneksi Database");
-    } catch (SQLException ex){
-        System.out.println("Berhasil Koneksi Database"+ex);
-    }
-    return koneksi;
+        // 1. Load Driver MySQL
+        try {
+            // Menggunakan driver MySQL cj (disarankan untuk MySQL versi baru)
+            Class.forName("com.mysql.cj.jdbc.Driver"); 
+        } catch (ClassNotFoundException ex){
+            System.out.println("Driver tidak ditemukan: " + ex);
+        }
+        
+        // 2. Hubungkan ke Database
+        String url = "jdbc:mysql://localhost:3307/db_perpustakaan";
+        try {
+            koneksi = DriverManager.getConnection(url, "root", "");
+            System.out.println("Koneksi Database Berhasil!");
+        } catch (SQLException ex){
+            // Koreksi pesan: ini adalah kondisi GAGAL
+            System.out.println("Koneksi Database GAGAL: " + ex); 
+        }
+        
+        return koneksi;
     }   
 }
 
