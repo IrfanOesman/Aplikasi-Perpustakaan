@@ -34,14 +34,14 @@ public class Anggota {
     }
 
     // Constructor tanpa id (untuk INSERT baru)
-    public Anggota(String nama, String noAnggota, String email,
-                   String noTelpon, String alamat) {
+    public Anggota(String nama, String noAnggota, String email, 
+                   String noTelpon, String alamat, String status) {
         this.nama = nama;
         this.noAnggota = noAnggota;
         this.email = email;
         this.noTelpon = noTelpon;
         this.alamat = alamat;
-        this.status = "aktif";
+        this.status = status;
     }
 
     // Getter
