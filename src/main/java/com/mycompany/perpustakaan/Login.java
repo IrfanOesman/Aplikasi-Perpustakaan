@@ -35,6 +35,7 @@ public class Login extends javax.swing.JFrame {
     }
     public Login() {
         initComponents();
+        this.setLocationRelativeTo(null);
          Koneksi db = new Koneksi();
         this.conn = db.connect();
         if (this.conn == null) {
@@ -187,7 +188,7 @@ public class Login extends javax.swing.JFrame {
             
             if (role.equalsIgnoreCase("Admin")) {
                 // Buka dashboard admin atau form master data (buku/anggota)
-                LaporanDashboard adminPage = new LaporanDashboard(); // Sesuaikan nama class form admin Anda
+                LaporanDashboard adminPage = new LaporanDashboard(id, namaUser); // Sesuaikan nama class form admin Anda
                 adminPage.setVisible(true);
             } else {
                 // Buka halaman untuk Anggota biasa (misal: katalog buku)

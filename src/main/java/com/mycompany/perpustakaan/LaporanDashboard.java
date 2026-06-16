@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -18,80 +19,74 @@ import javax.swing.table.DefaultTableModel;
  * @author sajin
  */
 public class LaporanDashboard extends javax.swing.JFrame {
-    
+    DefaultTableModel modelDipinjam;
+    DefaultTableModel modelTopBooks;
+    private int idLogin;
+    private String namaAdmin;
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(LaporanDashboard.class.getName());
     private Connection conn;
     
-    private void load_tableDipinjam() {
-    DefaultTableModel model = new DefaultTableModel();
-    model.addColumn("ID Peminjam");
-    model.addColumn("Nama Anggota");
-    model.addColumn("Judul Buku");
-    model.addColumn("Tgl Dipinjam");     
-    model.addColumn("Jatuh Tempo");     
-    model.addColumn("Status");
-    
-    try {
-        String sql = "SELECT p.id_peminjam, a.nama, b.judul, " +
-                     "p.tanggal_pinjam, p.tanggal_jatuh_tempo, p.status " +
-                     "FROM peminjaman p " +
-                     "INNER JOIN anggota a ON p.id_anggota = a.id_anggota " +
-                     "INNER JOIN buku b ON p.id_buku = b.id_buku";
+    private void loadTabelDipinjam() {// PERBAIKAN 1: Bersihkan model global sebelum memuat ulang data agar tidak duplikat
+        modelDipinjam.setRowCount(0);
         
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet res = pst.executeQuery();
+        try {
+            // Menggunakan klausa WHERE p.status = 'dipinjam' agar sesuai fungsi tab
+            String sql = "SELECT p.id_peminjam, a.nama, b.judul, " +
+                         "p.tanggal_pinjam, p.tanggal_jatuh_tempo, p.status " +
+                         "FROM peminjaman p " +
+                         "INNER JOIN anggota a ON p.id_anggota = a.id_anggota " +
+                         "INNER JOIN buku b ON p.id_buku = b.id_buku " +
+                         "WHERE p.status = 'dipinjam'";
+            
+            PreparedStatement pst = conn.prepareStatement(sql);
+            ResultSet res = pst.executeQuery();
 
-        while (res.next()) {
-            model.addRow(new Object[]{
-                res.getString("id_peminjam"), 
-                res.getString("nama"), 
-                res.getString("judul"),   
-                res.getString("tanggal_pinjam"),     
-                res.getString("tanggal_jatuh_tempo"), 
-                res.getString("status")
-            });
+            while (res.next()) {
+                modelDipinjam.addRow(new Object[]{
+                    res.getString("id_peminjam"), // Disesuaikan dengan nama kolom database asli 'id_peminiam'
+                    res.getString("nama"), 
+                    res.getString("judul"),   
+                    res.getString("tanggal_pinjam"),     
+                    res.getString("tanggal_jatuh_tempo"), 
+                    res.getString("status")
+                });
+            }
+            
+            tabelBukuSedangDipinjam.setModel(modelDipinjam);
+            
+        } catch (SQLException e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error Load Data: " + e.getMessage());
         }
-        
-        jTable1.setModel(model);
-        
-    } catch (SQLException e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error Load Data: " + e.getMessage());
     }
+    private void loadTableTopBooks(){// PERBAIKAN 2: Bersihkan model global top books sebelum memuat ulang data
+        modelTopBooks.setRowCount(0);
 
-}
-    private void loadTableTopBooks(){
-    DefaultTableModel model = new DefaultTableModel();
+        try {
+            String sql = "SELECT b.judul, b.pengarang, b.kategori, COUNT(p.id_buku) AS total_dipinjam " +
+                         "FROM peminjaman p " +
+                         "INNER JOIN buku b ON p.id_buku = b.id_buku " +
+                         "GROUP BY p.id_buku, b.judul, b.pengarang, b.kategori " +
+                         "ORDER BY total_dipinjam DESC";
 
-    model.addColumn("Ranking");
-    model.addColumn("Judul Buku");
-    model.addColumn("Total Dipinjam");
+            PreparedStatement pst = conn.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
 
-    try {
-        String sql = "SELECT b.judul, COUNT(*) AS total_peminjaman " +
-                     "FROM peminjaman p " +
-                     "INNER JOIN buku b ON p.id_buku = b.id_buku " +
-                     "GROUP BY b.id_buku, b.judul " +
-                     "ORDER BY total_peminjaman DESC";
+            int ranking = 1;
+            while (rs.next()) {
+                modelTopBooks.addRow(new Object[]{
+                    ranking++,
+                    rs.getString("judul"),
+                    rs.getString("pengarang"),
+                    rs.getString("kategori"),
+                    rs.getInt("total_dipinjam")
+                });
+            }
 
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
+            tabelTopBooks.setModel(modelTopBooks);
 
-        int ranking = 1;
-
-        while (rs.next()) {
-            model.addRow(new Object[]{
-                ranking++,
-                rs.getString("judul"),
-                rs.getInt("total_peminjaman")
-            });
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
         }
-
-        jTable6.setModel(model);
-
-    } catch (SQLException e) {
-        JOptionPane.showMessageDialog(null,
-                "Error: " + e.getMessage());
-    }
     }
     private void loadDashboard(){
         try {
@@ -140,12 +135,89 @@ public class LaporanDashboard extends javax.swing.JFrame {
     } catch (Exception e) {
     }
     }
+    private void buttonCari(){String keyword = fCari.getText().trim();
+        int tabAktif = tabPane.getSelectedIndex(); // Mendapatkan tab yang sedang dibuka user
+        System.out.println("Keyword dicari: " + keyword + " | Tab Aktif: " + tabAktif);
+//        if (keyword.isEmpty()) {
+//            loadTabelDipinjam();
+//            loadTableTopBooks();
+//            return;
+//        }
+        
+        try {
+            if (tabAktif == 0) { 
+                // ISI LOGIKA SEARCH UNTUK TAB 1 (Buku Sedang Dipinjam)
+                modelDipinjam.setRowCount(0);
+                
+                // PERBAIKAN 3: Menambahkan p.status pada klausa SELECT agar rs.getString("status") terbaca sempurna
+                String sql = "SELECT p.id_peminjam, a.nama, b.judul, p.tanggal_pinjam, p.tanggal_jatuh_tempo, p.status " +
+                             "FROM peminjaman p " +
+                             "INNER JOIN anggota a ON p.id_anggota = a.id_anggota " +
+                             "INNER JOIN buku b ON p.id_buku = b.id_buku " +
+                             "WHERE p.status = 'dipinjam' AND (b.judul LIKE ? OR a.nama LIKE ?)";
+                             
+                PreparedStatement pst = conn.prepareStatement(sql);
+                pst.setString(1, "%" + keyword + "%");
+                pst.setString(2, "%" + keyword + "%");
+                ResultSet rs = pst.executeQuery();
+                
+                while(rs.next()) {
+                    modelDipinjam.addRow(new Object[]{
+                        rs.getString("id_peminjam"), 
+                        rs.getString("nama"), 
+                        rs.getString("judul"),   
+                        rs.getString("tanggal_pinjam"),     
+                        rs.getString("tanggal_jatuh_tempo"), 
+                        rs.getString("status")
+                    });
+                }
+                
+                // PERBAIKAN UTAMA 4: Pindahkan setModel ke LUAR loop while agar JTable visual dipaksa refresh walau data kosong
+                tabelBukuSedangDipinjam.setModel(modelDipinjam);
+                
+            } else if (tabAktif == 1) { 
+                // ISI LOGIKA SEARCH UNTUK TAB 2 (Top Books)
+                modelTopBooks.setRowCount(0);
+                String sql = "SELECT b.judul, b.pengarang, b.kategori, COUNT(p.id_buku) AS total_dipinjam " +
+                             "FROM peminjaman p " +
+                             "INNER JOIN buku b ON p.id_buku = b.id_buku " +
+                             "WHERE b.judul LIKE ? OR b.kategori LIKE ? " +
+                             "GROUP BY p.id_buku, b.judul, b.pengarang, b.kategori " +
+                             "ORDER BY total_dipinjam DESC";
+                             
+                PreparedStatement pst = conn.prepareStatement(sql);
+                pst.setString(1, "%" + keyword + "%");
+                pst.setString(2, "%" + keyword + "%");
+                ResultSet rs = pst.executeQuery();
+                
+                int ranking = 1;
+                while(rs.next()) {
+                    modelTopBooks.addRow(new Object[]{
+                        ranking++,
+                        rs.getString("judul"),
+                        rs.getString("pengarang"),
+                        rs.getString("kategori"),
+                        rs.getInt("total_dipinjam")
+                    });
+                }
+                
+                // PERBAIKAN UTAMA 5: Pindahkan setModel ke LUAR loop while demi konsistensi data visual
+                tabelTopBooks.setModel(modelTopBooks);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error saat mencari: " + e.getMessage());
+        }
+    }
     
     /**
      * Creates new form LaporanDashboard
      */
-    public LaporanDashboard() {
+    public LaporanDashboard(int idLogin, String namaUser) {
         initComponents();
+        this.setLocationRelativeTo(null);
+        this.idLogin = idLogin;
+        this.namaAdmin = namaUser;
+        lblNama.setText(namaUser);
         try {
         String url ="jdbc:mysql://localhost:3307/db_perpustakaan";
         String user="root";
@@ -155,9 +227,19 @@ public class LaporanDashboard extends javax.swing.JFrame {
     } catch (Exception e) {
          e.printStackTrace();
     }
+        // Setup Tab 1: Buku Sedang Dipinjam
+        Object[] kolomSedang = {"ID Pinjam", "Nama Anggota", "Judul Buku", "Tgl Pinjam", "Jatuh Tempo", "Status"};
+        modelDipinjam = new DefaultTableModel(null, kolomSedang);
+        tabelBukuSedangDipinjam.setModel(modelDipinjam);
+
+        // Setup Tab 2: Top Books
+        Object[] kolomTop = {"Peringkat", "Judul Buku", "Pengarang", "Kategori", "Total Dipinjam"};
+        modelTopBooks = new DefaultTableModel(null, kolomTop);
+        tabelTopBooks.setModel(modelTopBooks);
         loadDashboard();
-        load_tableDipinjam();
+        loadTabelDipinjam();
         loadTableTopBooks();
+
     }
 
     /**
@@ -189,11 +271,11 @@ public class LaporanDashboard extends javax.swing.JFrame {
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        jTabbedPane4 = new javax.swing.JTabbedPane();
+        tabPane = new javax.swing.JTabbedPane();
         jPanel7 = new javax.swing.JPanel();
         jPanel10 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        tabelBukuSedangDipinjam = new javax.swing.JTable();
         jTextField4 = new javax.swing.JTextField();
         jButton10 = new javax.swing.JButton();
         jButton11 = new javax.swing.JButton();
@@ -202,21 +284,21 @@ public class LaporanDashboard extends javax.swing.JFrame {
         jPanel11 = new javax.swing.JPanel();
         jButton16 = new javax.swing.JButton();
         jScrollPane6 = new javax.swing.JScrollPane();
-        jTable6 = new javax.swing.JTable();
-        jTextField6 = new javax.swing.JTextField();
+        tabelTopBooks = new javax.swing.JTable();
+        fCari = new javax.swing.JTextField();
         jButton17 = new javax.swing.JButton();
         jButton18 = new javax.swing.JButton();
-        jPanel4 = new javax.swing.JPanel();
-        btnPrint = new javax.swing.JButton();
-        jScrollPane7 = new javax.swing.JScrollPane();
-        jTable7 = new javax.swing.JTable();
-        jTextField7 = new javax.swing.JTextField();
-        jButton20 = new javax.swing.JButton();
-        jButton21 = new javax.swing.JButton();
         jLabel20 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
+        lblNama = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        jMenuItem4 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem3 = new javax.swing.JMenuItem();
 
         javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
@@ -381,7 +463,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
 
         jPanel10.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tabelBukuSedangDipinjam.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -392,7 +474,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane4.setViewportView(jTable1);
+        jScrollPane4.setViewportView(tabelBukuSedangDipinjam);
 
         jButton10.setText("Search");
 
@@ -400,6 +482,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
         jButton11.addActionListener(this::jButton11ActionPerformed);
 
         jButton12.setText("Print");
+        jButton12.addActionListener(this::jButton12ActionPerformed);
 
         javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
@@ -451,13 +534,13 @@ public class LaporanDashboard extends javax.swing.JFrame {
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
-        jTabbedPane4.addTab("Buku Sedang Dipinjam", jPanel7);
+        tabPane.addTab("Buku Sedang Dipinjam", jPanel7);
 
         jPanel11.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         jButton16.setText("Print");
 
-        jTable6.setModel(new javax.swing.table.DefaultTableModel(
+        tabelTopBooks.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -468,9 +551,10 @@ public class LaporanDashboard extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane6.setViewportView(jTable6);
+        jScrollPane6.setViewportView(tabelTopBooks);
 
         jButton17.setText("Search");
+        jButton17.addActionListener(this::jButton17ActionPerformed);
 
         jButton18.setText("Refresh");
         jButton18.addActionListener(this::jButton18ActionPerformed);
@@ -490,7 +574,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
                             .addComponent(jButton18, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(jPanel11Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(fCari, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton17, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -500,7 +584,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel11Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(fCari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton17))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -525,76 +609,42 @@ public class LaporanDashboard extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jTabbedPane4.addTab("Top Books", jPanel8);
-
-        btnPrint.setText("Print");
-        btnPrint.addActionListener(this::btnPrintActionPerformed);
-
-        jTable7.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane7.setViewportView(jTable7);
-
-        jButton20.setText("Search");
-
-        jButton21.setText("Refresh");
-        jButton21.addActionListener(this::jButton21ActionPerformed);
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                        .addComponent(jScrollPane7, javax.swing.GroupLayout.DEFAULT_SIZE, 808, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnPrint, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton21, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton20, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton20))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addComponent(jButton21)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnPrint))
-                    .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 236, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jTabbedPane4.addTab("Riwayat Peminjaman", jPanel4);
+        tabPane.addTab("Top Books", jPanel8);
 
         jLabel20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/WhatsApp Image 2026-05-20 at 20.04.07 (1).jpeg"))); // NOI18N
 
-        jLabel5.setText("Kelompok Perpustakaan");
+        lblNama.setText("Kelompok Perpustakaan");
 
         jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/dots 16px.png"))); // NOI18N
         jLabel6.setText("Online");
 
         jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/account 32px.png"))); // NOI18N
+
+        jMenu1.setText("Akun");
+
+        jMenuItem4.setText("Logout");
+        jMenuItem4.addActionListener(this::jMenuItem4ActionPerformed);
+        jMenu1.add(jMenuItem4);
+
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("Menu");
+
+        jMenuItem1.setText("Peminjaman");
+        jMenuItem1.addActionListener(this::jMenuItem1ActionPerformed);
+        jMenu2.add(jMenuItem1);
+
+        jMenuItem2.setText("Manajemen Anggota");
+        jMenuItem2.addActionListener(this::jMenuItem2ActionPerformed);
+        jMenu2.add(jMenuItem2);
+
+        jMenuItem3.setText("Manajemen Buku");
+        jMenuItem3.addActionListener(this::jMenuItem3ActionPerformed);
+        jMenu2.add(jMenuItem3);
+
+        jMenuBar1.add(jMenu2);
+
+        setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -619,7 +669,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
                                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
                                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jTabbedPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 917, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(tabPane, javax.swing.GroupLayout.PREFERRED_SIZE, 917, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
@@ -627,7 +677,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
                         .addComponent(jLabel7)
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
+                            .addComponent(lblNama)
                             .addComponent(jLabel6))
                         .addGap(16, 16, 16))))
         );
@@ -648,7 +698,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
                                 .addContainerGap()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel5)
+                                        .addComponent(lblNama)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(jLabel6))
                                     .addGroup(layout.createSequentialGroup()
@@ -661,7 +711,7 @@ public class LaporanDashboard extends javax.swing.JFrame {
                             .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jTabbedPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(tabPane, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
@@ -670,20 +720,62 @@ public class LaporanDashboard extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
-        // TODO add your handling code here:
+      loadDashboard();
+      loadTabelDipinjam();
+      loadTableTopBooks();
     }//GEN-LAST:event_jButton11ActionPerformed
 
     private void jButton18ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton18ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton18ActionPerformed
 
-    private void jButton21ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton21ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton21ActionPerformed
+    private void jButton17ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton17ActionPerformed
+        buttonCari();
+    }//GEN-LAST:event_jButton17ActionPerformed
 
-    private void btnPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPrintActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_btnPrintActionPerformed
+    private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
+    int tabAktif = tabPane.getSelectedIndex();
+    MessageFormat header;
+    MessageFormat footer = new MessageFormat("Halaman {0,number,integer}");
+    boolean complete = false;
+    
+    try {
+        if (tabAktif == 0) {
+            if(tabelBukuSedangDipinjam.getRowCount() == 0) return;
+            header = new MessageFormat("Laporan Daftar Buku Sedang Dipinjam");
+            complete = tabelBukuSedangDipinjam.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+        } else {
+            if(tabelTopBooks.getRowCount() == 0) return;
+            header = new MessageFormat("Laporan Statistik Buku Terpopuler (Top Books)");
+            complete = tabelTopBooks.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+        }
+        
+        if (complete) {
+            JOptionPane.showMessageDialog(this, "Cetak dokumen berhasil.");
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Gagal mencetak: " + e.getMessage());
+    }
+    }//GEN-LAST:event_jButton12ActionPerformed
+
+    private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
+    this.dispose();
+    }//GEN-LAST:event_jMenuItem4ActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+    new ManagementPeminjaman(idLogin,namaAdmin).setVisible(true);
+    this.dispose();
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+    new Manajemen_Anggota(idLogin,namaAdmin).setVisible(true);
+    this.dispose();
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
+      new Buku(idLogin,namaAdmin).setVisible(true);
+    this.dispose();
+    }//GEN-LAST:event_jMenuItem3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -710,15 +802,13 @@ public class LaporanDashboard extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnPrint;
+    private javax.swing.JTextField fCari;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton11;
     private javax.swing.JButton jButton12;
     private javax.swing.JButton jButton16;
     private javax.swing.JButton jButton17;
     private javax.swing.JButton jButton18;
-    private javax.swing.JButton jButton20;
-    private javax.swing.JButton jButton21;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -733,30 +823,32 @@ public class LaporanDashboard extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane6;
-    private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTabbedPane jTabbedPane4;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable6;
-    private javax.swing.JTable jTable7;
     private javax.swing.JTextField jTextField4;
-    private javax.swing.JTextField jTextField6;
-    private javax.swing.JTextField jTextField7;
+    private javax.swing.JLabel lblNama;
+    private javax.swing.JTabbedPane tabPane;
+    private javax.swing.JTable tabelBukuSedangDipinjam;
+    private javax.swing.JTable tabelTopBooks;
     // End of variables declaration//GEN-END:variables
 }

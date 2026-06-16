@@ -36,6 +36,7 @@ public class Register extends javax.swing.JFrame {
 
     public Register() {
         initComponents();
+        this.setLocationRelativeTo(null);
          Koneksi db = new Koneksi();
         this.conn = db.connect();
         if (this.conn == null) {

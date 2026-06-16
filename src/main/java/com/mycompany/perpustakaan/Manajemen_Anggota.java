@@ -19,7 +19,8 @@ import java.sql.Statement;
  * @author DHANI
  */
 public class Manajemen_Anggota extends javax.swing.JFrame {
-    
+    private int idLogin;
+    private String namaAdmin;
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Manajemen_Anggota.class.getName());
         private Connection conn;
             DefaultTableModel model;
@@ -178,8 +179,12 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
     txtNama.requestFocus();
 }
     
-    public Manajemen_Anggota() {
+    public Manajemen_Anggota(int idLogin, String namaUser) {
         initComponents();
+        this.setLocationRelativeTo(null);
+        lblNama.setText(namaUser);
+        this.idLogin = idLogin;
+        this.namaAdmin = namaUser;
         Koneksi db = new Koneksi();
         this.conn = db.connect();
         if (this.conn == null) {
@@ -243,6 +248,16 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         cmbRole = new javax.swing.JComboBox<>();
         txtPassword = new javax.swing.JPasswordField();
         jLabel14 = new javax.swing.JLabel();
+        jLabel19 = new javax.swing.JLabel();
+        lblNama = new javax.swing.JLabel();
+        jLabel20 = new javax.swing.JLabel();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        jMenuItem4 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem3 = new javax.swing.JMenuItem();
 
         jLabel1.setText("jLabel1");
 
@@ -393,6 +408,42 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         jLabel14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/cukulat.jpeg"))); // NOI18N
         getContentPane().add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 50, 400, 600));
 
+        jLabel19.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/account 32px.png"))); // NOI18N
+        getContentPane().add(jLabel19, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 30, -1, -1));
+
+        lblNama.setText("Kelompok Perpustakaan");
+        getContentPane().add(lblNama, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 30, -1, -1));
+
+        jLabel20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/dots 16px.png"))); // NOI18N
+        jLabel20.setText("Online");
+        getContentPane().add(jLabel20, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 60, -1, -1));
+
+        jMenu1.setText("Akun");
+
+        jMenuItem4.setText("Logout");
+        jMenuItem4.addActionListener(this::jMenuItem4ActionPerformed);
+        jMenu1.add(jMenuItem4);
+
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("Menu");
+
+        jMenuItem1.setText("Peminjaman");
+        jMenuItem1.addActionListener(this::jMenuItem1ActionPerformed);
+        jMenu2.add(jMenuItem1);
+
+        jMenuItem2.setText("Dashboard");
+        jMenuItem2.addActionListener(this::jMenuItem2ActionPerformed);
+        jMenu2.add(jMenuItem2);
+
+        jMenuItem3.setText("Manajemen Buku");
+        jMenuItem3.addActionListener(this::jMenuItem3ActionPerformed);
+        jMenu2.add(jMenuItem3);
+
+        jMenuBar1.add(jMenu2);
+
+        setJMenuBar(jMenuBar1);
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -444,6 +495,25 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
     }
     }//GEN-LAST:event_tabelMouseClicked
 
+    private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
+        this.dispose();
+    }//GEN-LAST:event_jMenuItem4ActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        new ManagementPeminjaman(idLogin,namaAdmin).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        new Manajemen_Anggota(idLogin,namaAdmin).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
+        new Buku(idLogin, namaAdmin).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jMenuItem3ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -466,7 +536,7 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new Manajemen_Anggota().setVisible(true));
+
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -488,7 +558,9 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -496,11 +568,19 @@ public class Manajemen_Anggota extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTable jTable1;
     private javax.swing.JTextField jTextField4;
+    private javax.swing.JLabel lblNama;
     private javax.swing.JTable tabel;
     private javax.swing.JTextField txtEmail;
     private javax.swing.JTextField txtHp;

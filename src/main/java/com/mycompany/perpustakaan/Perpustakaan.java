@@ -11,6 +11,6 @@ package com.mycompany.perpustakaan;
 public class Perpustakaan {
 
     public static void main(String[] args) {
-       new LaporanDashboard().setVisible(true);
+       new Login().setVisible(true);
     }
 }
